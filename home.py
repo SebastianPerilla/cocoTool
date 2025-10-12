@@ -9,11 +9,13 @@ st.set_page_config(page_title="Heinens", initial_sidebar_state='auto')
 dataPath = 'HEINENS.xlsx'
 df = pd.ExcelFile(dataPath)
 
+sheetName = df.sheet_names]
+
 easterSheetName = 'EASTER 2026'
 df = pd.read_excel(dataPath, sheet_name=0)
 
 # Basic Data Analysis of moving the Column Names
-df = df.drop(columns='OFERTA EASTER 2025 ')
+df = df.drop(columns=df.columns[0])
 
 header_row_idx = df[df.iloc[:, 0] == "PRODUCT"].index[0]
 df.columns = df.iloc[header_row_idx]
@@ -26,6 +28,15 @@ df['FARM'] = df['FARM'].str.upper()
 
 st.title('Bienvenido Carlos')
 st.markdown('#### Escoge los productos que tu quieras')
+
+options = st.selectbox(label='Escoge los tipos de products:',
+                       options=sheetName,
+                       placeholder='Easter, VDay, Valentine, etc.', 
+                       width='stretch')
+
+# st.write('Seleccion', options)
+    
+
 
 preview = df['PRODUCT']
 
