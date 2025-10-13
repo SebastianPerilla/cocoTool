@@ -56,7 +56,6 @@ for c in ["COSTO_TOTAL", "BUNCH_X_CAJA", "PRECIO_KILO", "DUTIES", "PRICE_CLIENTE
         df[c] = pd.to_numeric(df[c], errors="coerce")
 
 
-
 # ---------- Per-item adders (bilingual, intuitive, real defaults from sheet) ----------
 with st.sidebar:
     st.header("Productos seleccionados/Selected Products")
@@ -64,11 +63,11 @@ with st.sidebar:
     
     # ---------- CONSTANTS (bilingual, intuitive, with real defaults) ----------
 with st.sidebar.expander("⚙️ Constantes / Constants (modificables)", expanded=False):
-    ratioFlete = st.number_input("Divisor Volumen / Volume Divisor (Ratio Flete)", min_value=1.0, value=6000.0, step=10.0)
-    dutyMultiplier = st.number_input("Multiplicador Derechos / Duties Multiplier", min_value=0.0, value=0.218, step=0.001, format="%.3f")
-    wetPackConst = st.number_input("cm → pulgadas / cm → inches (2.54)", min_value=0.0001, value=2.54, step=0.01)
-    cubeConst = st.number_input("in³ por ft³ / in³ per ft³ (1728)", min_value=1.0, value=1728.0, step=1.0)
-    # pricePerCube_const = st.number_input("Precio por Cubo / Price per Cube", min_value=0.0, value=2.18, step=0.01)
+    ratioFleteInp = st.number_input("Divisor Volumen / Volume Divisor (Ratio Flete)", min_value=1.0, value=6000.0, step=10.0)
+    dutyMulti = st.number_input("Multiplicador Derechos / Duties Multiplier", min_value=0.0, value=0.218, step=0.001, format="%.3f")
+    wetPackConstInp = st.number_input("cm → pulgadas / cm → inches (2.54)", min_value=0.0001, value=2.54, step=0.01)
+    cubeConstInp = st.number_input("in³ por ft³ / in³ per ft³ (1728)", min_value=1.0, value=1728.0, step=1.0)
+    pricePerCube_const = st.number_input("Precio por Cubo / Price per Cube", min_value=0.0, value=2.18, step=0.01)
     pricePerPiece_const = st.number_input("Precio por Pieza / Price per Piece", min_value=0.0, value=0.50, step=0.01)
     fuelConst = st.number_input("Constante Combustible / Fuel Constant", min_value=0.0, value=0.30, step=0.01)
     
@@ -94,7 +93,8 @@ with st.sidebar.expander("⚙️ Constantes / Constants (modificables)", expande
         f"Equivalente a aumento sobre costo (markup): **{markup*100:.2f}%** · "
         f"Razón costo/precio (cost/price): **{1 - margin:.4f}**"
     )
-    
+
+
 # ---------- Main selector (first column is usually PRODUCT) ----------
 event = st.dataframe(
     df.iloc[:, 0],
@@ -114,8 +114,97 @@ with st.sidebar:
         if "COSTO_TOTAL" not in newDF.columns:
             st.error(f"No se encontró la columna COSTO_TOTAL. Columnas disponibles: {list(newDF.columns)}")
         else:
-            # Base cost shown to the user
-            newDF["COSTO_TOTAL"] = pd.to_numeric(newDF["COSTO_TOTAL"], errors="coerce").round(2)
+            # Base cost shown tod the user
+            # Flete Miami
+
+            # Volume
+            length = df['LENGTH']
+            width = df['WIDTH']
+            height = df['HEIGHT']
+            ratioFlete = ratioFleteInp
+
+            df['VOLUME'] = (length * width * height) / ratioFlete  # Volume
+            df['ROUNDED_VOLUME'] = np.ceil(df['VOLUME'])    # Rounded Volume
+
+            roundedVol = df['ROUNDED_VOLUME']
+
+            # Precio Caja
+            df['PRECIO_CAJA'] = roundedVol * df['PRECIO_KILO']
+
+            # Duties
+            dutyMultiplier = dutyMulti
+            precioBQT = df['PRECIO/_BQT']
+            bunchCaja = df['BUNCH_X_CAJA']
+            df['DUTIES'] = ( precioBQT * bunchCaja) * dutyMultiplier
+
+
+            #FLETE
+            precioKilo = df['PRECIO_KILO']
+            precioCaja = roundedVol * precioKilo
+            extrasBuffer = df['EXTRAS']
+            duties = df['DUTIES']
+            totalCaja = df['TOTAL_CAJA']
+            df['FLETE_/BQT'] = pd.to_numeric(((precioCaja + extrasBuffer + duties) / totalCaja)).round(2)
+                        
+            # WET PACKS
+
+            # HT
+            wetPackConst = wetPackConstInp
+            df['HT'] = df['LENGTH'] / wetPackConst
+
+            # WD
+            df['WD'] = df['WIDTH'] / wetPackConst
+
+            # DP
+            df['DP'] = df['HEIGHT'] / wetPackConst
+
+            # CUBE
+            cubeConst = cubeConstInp
+            ht = df['HT']
+            wd = df['WD']
+            dp = df['DP']
+            df['CUBE'] = pd.to_numeric(((ht * wd * dp) / cubeConst)).round(2)
+
+            # Price Bunch
+            wetPackPrice = df['PRICE']
+            wetPackSize = df['PACK']
+
+            df['PRICE_/BUNCH'] = pd.to_numeric(( wetPackPrice/ wetPackSize)).round(2)
+
+
+            # WP/BQT
+            priceBunch = df['PRICE_/BUNCH']
+            transportPallet = df['TRANSP_/PALL']
+            df['WP/BQT'] = priceBunch + transportPallet           
+
+
+            # Freight
+            cube = df['CUBE']
+            df['CUBE_WET_PACK'] = cube.round(2)
+
+            # Price Per Piece
+            cubeWetPack = pd.to_numeric(df['CUBE_WET_PACK'])
+            pricePerCube = pricePerCube_const
+            pricePerPiece = pricePerPiece_const
+            fuelConst = fuelConst
+            df['FUEL'] = ((pricePerCube * pricePerPiece * cubeWetPack) * fuelConst).round(2)
+
+
+
+            # Price Per Box
+            fuel = df['FUEL']
+
+            df['PRICE_PER_BOX'] = pd.to_numeric((cubeWetPack * (pricePerCube + pricePerPiece + fuel))).round(2)
+            
+
+            # FEEUU / BQT
+            packs = df['PACK']
+            pricePerBox = df['PRICE_PER_BOX']
+            df['F.EEUU/_BQT'] = pd.to_numeric((pricePerBox / packs)).round(2)
+            
+            costoTotal = sum([df['PRECIO/_FINCA'],df['FLETE_/BQT'], df['F.EEUU/_BQT'], df['WP/BQT']])
+            
+            newDF["COSTO_TOTAL"] = pd.to_numeric(costoTotal, errors="coerce").round(2)
 
             # <-- use the sidebar variables (adders) to affect price
            

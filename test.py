@@ -31,16 +31,96 @@ df = RowItem(df='df', dataPath=dataPath, chosenSheet=sheetName).produceDataframe
 df.columns = normalize_cols(df.columns)  # e.g., "COSTO\n TOTAL" -> "COSTO_TOTAL", "PRICE \nCLIENTE" -> "PRICE_CLIENTE"
 
 ## More Data Cleaning and Column Reconstruction
-length = df['Length']
-width = df['Width']
-height = df['Height']
+
+##### Flete Miami
+
+# Volume
+length = df['LENGTH']
+width = df['WIDTH']
+height = df['HEIGHT']
 ratioFlete = 6000
 
+df['VOLUME'] = (length * width * height) / ratioFlete  # Volume
+df['ROUNDED_VOLUME'] = np.ceil(df['VOLUME'])    # Rounded Volume
 
-df['volume'] = (length * width * height) / ratioFlete
+roundedVol = df['ROUNDED_VOLUME']
 
-df['Rounded Volume'] = np.ceil(df['volume'])
-df['Rounded Volume']
+# Precio Caja
+df['PRECIO_CAJA'] = roundedVol * df['PRECIO_KILO']
+
+# Duties
+dutyMultiplier = 0.218
+precioBQT = df['PRECIO/_BQT']
+bunchCaja = df['BUNCH_X_CAJA']
+df['DUTIES'] = ( precioBQT * bunchCaja) * dutyMultiplier
+
+
+#FLETE
+precioKilo = df['PRECIO_KILO']
+precioCaja = roundedVol * precioKilo
+extrasBuffer = df['EXTRAS']
+duties = df['DUTIES']
+totalCaja = df['TOTAL_CAJA']
+df['FLETE_/BQT'] = pd.to_numeric(((precioCaja + extrasBuffer + duties) / totalCaja)).round(2)
+df['FUEL']
+
+##### WET PACKS
+
+# HT
+wetPackConst = 2.54
+df['HT'] = df['LENGTH'] / wetPackConst
+
+# WD
+df['WD'] = df['WIDTH'] / wetPackConst
+
+# DP
+df['DP'] = df['HEIGHT'] / wetPackConst
+
+# CUBE
+cubeConst = 1728
+ht = df['HT']
+wd = df['WD']
+dp = df['DP']
+df['CUBE'] = pd.to_numeric(((ht * wd * dp) / cubeConst)).round(2)
+
+# Price Bunch
+wetPackPrice = df['PRICE']
+wetPackSize = df['PACK']
+
+df['PRICE_/BUNCH'] = pd.to_numeric(( wetPackPrice/ wetPackSize)).round(2)
+
+# WP/BQT
+priceBunch = df['PRICE_/BUNCH']
+transportPallet = df['TRANSP_/PALL']
+df['WP/BQT'] = priceBunch + transportPallet
+df['CUBE']
+
+##### Freight
+
+# CUBE
+cube = df['CUBE']
+df['CUBE_WET_PACK'] = cube.round(2)
+
+# Price Per Piece
+cubeWetPack = pd.to_numeric(df['CUBE_WET_PACK'])
+pricePerCube = 2.18
+pricePerPiece = 0.50
+fuelConst = 0.30
+df['FUEL'] = ((pricePerCube * pricePerPiece * cubeWetPack) * fuelConst).round(2)
+
+# Price Per Box
+fuel = df['FUEL']
+
+df['PRICE_PER_BOX'] = pd.to_numeric((cubeWetPack * (pricePerCube + pricePerPiece + fuel))).round(2)
+df['PRICE_PER_BOX']
+
+# FEEUU / BQT
+packs = df['PACK']
+pricePerBox = df['PRICE_PER_BOX']
+df['F.EEUU/_BQT'] = pd.to_numeric((pricePerBox / packs)).round(2)
+df['F.EEUU/_BQT']
+
+
 
 # Fallback: if your data already has a computed price column, keep it numeric/rounded
 if "PRICE_CLIENTE" in df.columns:
