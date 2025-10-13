@@ -72,14 +72,17 @@ with st.sidebar.expander("⚙️ Constantes / Constants (modificables)", expande
     pricePerPiece_const = st.number_input("Precio por Pieza / Price per Piece", min_value=0.0, value=0.50, step=0.01)
     fuelConst = st.number_input("Constante Combustible / Fuel Constant", min_value=0.0, value=0.30, step=0.01)
     
-    
-    
+with st.sidebar.expander("Wet Pack (Costo Adicional)",  expanded=False):
+    wetPackButton = st.checkbox(label='Añadir Wet Pack (MUST PRESS)')
+    wetPackPriceInp = st.number_input("Wet Pack Price", min_value=0.00, value=0.00, step=1.00)
+    wetPackTransPal = st.number_input("Transportation Palette", min_value=0.00, value=0.00, step=1.00)
     # # Full width
     # wet_pack_add = st.number_input("💧 Integración Wet Pack / Wet Pack Integration (+)",
     #                                min_value=0.0, value=wet_pack_default, step=0.01, format="%.2f")
 
     st.markdown("---")
 
+with st.sidebar:
     # ======== NEW: Margin presets (steps of 5%), default 15% ========
     margin_options = list(range(0, 101, 5))
     margin_pct = st.selectbox(label="📈 Margen / Margin (% of price)",
@@ -164,20 +167,29 @@ with st.sidebar:
             ht = df['HT']
             wd = df['WD']
             dp = df['DP']
-            df['CUBE'] = pd.to_numeric(((ht * wd * dp) / cubeConst)).round(2)
-
+            
+            if wetPackButton:
+                df['CUBE'] = 2.89
+                print(df['CUBE'])
+            else:
+                df['CUBE'] = pd.to_numeric(((ht * wd * dp) / cubeConst)).round(2)
+            
             # Price Bunch
-            wetPackPrice = df['PRICE']
+            wetPackPrice = wetPackPriceInp
+            df['PACK']= df['BUNCH_X_CAJA']
             wetPackSize = df['PACK']
+            # print(f"Wetpack Pack", wetPackSize[0])
+            # print('Wet Pack Price', wetPackPrice)
 
-            df['PRICE_/BUNCH'] = pd.to_numeric(( wetPackPrice/ wetPackSize)).round(2)
-
-
+            df['PRICE_/BUNCH'] = pd.to_numeric(( wetPackPrice / wetPackSize)).round(2)
+            print("Wet Pack Price/BUCH",df['PRICE_/BUNCH'])
+            
             # WP/BQT
             priceBunch = df['PRICE_/BUNCH']
-            transportPallet = df['TRANSP_/PALL']
-            df['WP/BQT'] = priceBunch + transportPallet           
-
+            transportPallet = wetPackTransPal
+            # print(f"Transport Pallet",transportPallet)
+            df['WP/BQT'] = priceBunch + transportPallet   
+            # print("WT/BQT",df['WP/BQT'][0])        
 
             # Freight
             cube = df['CUBE']
@@ -185,25 +197,27 @@ with st.sidebar:
 
             # Price Per Piece
             cubeWetPack = pd.to_numeric(df['CUBE_WET_PACK'])
+            print(cubeWetPack[0])
             pricePerCube = pricePerCube_const
             pricePerPiece = pricePerPiece_const
             fuelConst = fuelConst
             df['FUEL'] = ((pricePerCube * pricePerPiece * cubeWetPack) * fuelConst).round(2)
 
-
-
             # Price Per Box
             fuel = df['FUEL']
+            # print(f"Fuel", fuel[0])
 
             df['PRICE_PER_BOX'] = pd.to_numeric((cubeWetPack * (pricePerCube + pricePerPiece + fuel))).round(2)
             
-
+            
             # FEEUU / BQT
             packs = df['PACK']
             pricePerBox = df['PRICE_PER_BOX']
             df['F.EEUU/_BQT'] = pd.to_numeric((pricePerBox / packs)).round(2)
+             
             
-            costoTotal = sum([df['PRECIO/_FINCA'],df['FLETE_/BQT'], df['F.EEUU/_BQT'], df['WP/BQT']])
+            costoTotal = df['PRECIO/_BQT'] + df['FLETE_/BQT'] + df['F.EEUU/_BQT'] + df['WP/BQT']
+            
             
             newDF["COSTO_TOTAL"] = pd.to_numeric(costoTotal, errors="coerce").round(2)
 
@@ -215,6 +229,7 @@ with st.sidebar:
             # price = (effective cost) * (1 + markup)
             newDF["PRICE_CLIENTE"] = (effective_cost * (1 + markup)).round(2)
 
+            print(newDF['PRICE_CLIENTE'][0])
             # Show ONLY these columns (no costo ajustado)
             display_cols = [c for c in ["PRODUCT", "BUNCH_X_CAJA", "COSTO_TOTAL", "PRICE_CLIENTE"] if c in newDF.columns]
             st.dataframe(newDF[display_cols], width="stretch", hide_index=True)
