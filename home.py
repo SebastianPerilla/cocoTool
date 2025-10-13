@@ -67,6 +67,7 @@ with st.sidebar.expander("⚙️ Constantes / Constants (modificables)", expande
     dutyMulti = st.number_input("Multiplicador Derechos / Duties Multiplier", min_value=0.0, value=0.218, step=0.001, format="%.3f")
     wetPackConstInp = st.number_input("cm → pulgadas / cm → inches (2.54)", min_value=0.0001, value=2.54, step=0.01)
     cubeConstInp = st.number_input("in³ por ft³ / in³ per ft³ (1728)", min_value=1.0, value=1728.0, step=1.0)
+    precioKiloInp = st.number_input("Price per Kilo/ Precio por Kilo", min_value=1.0, value=1.95, step=1.0)
     pricePerCube_const = st.number_input("Precio por Cubo / Price per Cube", min_value=0.0, value=2.18, step=0.01)
     pricePerPiece_const = st.number_input("Precio por Pieza / Price per Piece", min_value=0.0, value=0.50, step=0.01)
     fuelConst = st.number_input("Constante Combustible / Fuel Constant", min_value=0.0, value=0.30, step=0.01)
@@ -139,7 +140,7 @@ with st.sidebar:
 
 
             #FLETE
-            precioKilo = df['PRECIO_KILO']
+            precioKilo = precioKiloInp
             precioCaja = roundedVol * precioKilo
             extrasBuffer = df['EXTRAS']
             duties = df['DUTIES']
