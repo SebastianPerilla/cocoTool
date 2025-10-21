@@ -38,7 +38,7 @@ class SheetNames:
     def displayOptions(self, sheetList):
         options = st.selectbox(label='Choose Your Options',
                        options=sheetList,
-                       placeholder='Easter, VDay, Valentine, etc.', 
+                       placeholder='Easter, Valentines, V-Day etc.', 
                        width='stretch',
                        label_visibility='collapsed')
         return options

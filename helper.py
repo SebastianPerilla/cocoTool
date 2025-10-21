@@ -1,7 +1,5 @@
 import pandas as pd
 
-
-# ---------- helpers ----------
 def normalize_cols(cols: pd.Index) -> pd.Index:
     """Collapse whitespace/newlines, trim, upper-case, replace spaces with underscores."""
     return (
@@ -19,3 +17,13 @@ def default_from(df: pd.DataFrame, col: str, fallback: float) -> float:
         if not s.empty:
             return float(round(s.median(), 2))
     return float(fallback)
+
+
+def freight_size(dataframe: pd.DataFrame):
+    pass
+
+def wetpacks(dataframe: pd.DataFrame):
+    pass
+
+def freight_cost(datafram: pd.DataFrame):
+    pass

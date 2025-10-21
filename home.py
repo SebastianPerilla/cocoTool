@@ -6,18 +6,18 @@ from helper import normalize_cols
 
 st.set_page_config(page_title="Heinens", initial_sidebar_state='auto')
 
-# ---------- File upload ----------
-uploaded_file = st.file_uploader(label="📤 Sube tu archivo Excel / Upload your Excel file", type=["xlsx"])
+# File Upload
+uploaded_file = st.file_uploader(label="Upload your Excel/XLSX file", type=["xlsx"])
 
 if uploaded_file is not None:
     # Read directly from uploaded Excel
-    st.success("Archivo cargado correctamente / File uploaded successfully!")
+    st.success("File uploaded successfully!")
     dataPath = uploaded_file
 else:
-    st.info("📄 Por favor sube un archivo Excel para continuar / Please upload an Excel file to continue.")
+    st.info("Please upload an Excel/XSLX file to continue.")
     st.stop()
 
-# ---------- data ----------
+# Data
 homeDataframe = SheetNames(df="df", dataPath=dataPath)
 
 # ---------- UI header ----------
@@ -39,7 +39,7 @@ for c in ["COSTO_TOTAL", "BUNCH_X_CAJA", "PRECIO_KILO", "DUTIES", "PRICE_CLIENTE
 with st.sidebar:
     st.markdown("#### Parámetros de Costo / Cost Parameters (sumas)")
     
-    # ---------- CONSTANTS (bilingual, intuitive, with real defaults) ----------
+    # Constants
 with st.sidebar.expander("⚙️ Constantes / Constants (modificables)", expanded=False):
     ratioFleteInp = st.number_input("Divisor Volumen / Volume Divisor (Ratio Flete)", min_value=1.0, value=6000.0, step=10.0)
     dutyMulti = st.number_input("Multiplicador Derechos / Duties Multiplier", min_value=0.0, value=0.218, step=0.001, format="%.3f")
@@ -54,10 +54,7 @@ with st.sidebar.expander("Wet Pack (Costo Adicional)",  expanded=False):
     wetPackButton = st.checkbox(label='Añadir Wet Pack (MUST PRESS)')
     wetPackPriceInp = st.number_input("Wet Pack Price", min_value=0.00, value=0.00, step=1.00)
     wetPackTransPal = st.number_input("Transportation Palette", min_value=0.00, value=0.00, step=1.00)
-    # # Full width
-    # wet_pack_add = st.number_input("💧 Integración Wet Pack / Wet Pack Integration (+)",
-    #                                min_value=0.0, value=wet_pack_default, step=0.01, format="%.2f")
-
+    
     st.markdown("---")
 
 with st.sidebar:
@@ -149,7 +146,7 @@ with st.sidebar:
             
             if wetPackButton:
                 df['CUBE'] = 2.89
-                print(df['CUBE'])
+                # print(df['CUBE'])
             else:
                 df['CUBE'] = pd.to_numeric(((ht * wd * dp) / cubeConst)).round(2)
             
@@ -161,7 +158,7 @@ with st.sidebar:
             # print('Wet Pack Price', wetPackPrice)
 
             df['PRICE_/BUNCH'] = pd.to_numeric(( wetPackPrice / wetPackSize)).round(2)
-            print("Wet Pack Price/BUCH",df['PRICE_/BUNCH'])
+            # print("Wet Pack Price/BUCH",df['PRICE_/BUNCH'])
             
             # WP/BQT
             priceBunch = df['PRICE_/BUNCH']
@@ -176,7 +173,7 @@ with st.sidebar:
 
             # Price Per Piece
             cubeWetPack = pd.to_numeric(df['CUBE_WET_PACK'])
-            print(cubeWetPack[0])
+            # print(cubeWetPack[0])
             pricePerCube = pricePerCube_const
             pricePerPiece = pricePerPiece_const
             fuelConst = fuelConst
@@ -208,7 +205,7 @@ with st.sidebar:
             # price = (effective cost) * (1 + markup)
             newDF["PRICE_CLIENTE"] = (effective_cost * (1 + markup)).round(2)
 
-            print(newDF['PRICE_CLIENTE'][0])
+            # print(newDF['PRICE_CLIENTE'][0])
             # Show ONLY these columns (no costo ajustado)
             display_cols = [c for c in ["PRODUCT", "BUNCH_X_CAJA", "COSTO_TOTAL", "PRICE_CLIENTE"] if c in newDF.columns]
             st.dataframe(newDF[display_cols], width="stretch", hide_index=True)
