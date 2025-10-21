@@ -2,12 +2,12 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from rowItem import RowItem, SheetNames
+from helper import normalize_cols
 
 st.set_page_config(page_title="Heinens", initial_sidebar_state='auto')
 
-
 # ---------- File upload ----------
-uploaded_file = st.file_uploader("📤 Sube tu archivo Excel / Upload your Excel file", type=["xlsx"])
+uploaded_file = st.file_uploader(label="📤 Sube tu archivo Excel / Upload your Excel file", type=["xlsx"])
 
 if uploaded_file is not None:
     # Read directly from uploaded Excel
@@ -17,32 +17,12 @@ else:
     st.info("📄 Por favor sube un archivo Excel para continuar / Please upload an Excel file to continue.")
     st.stop()
 
-
-# ---------- helpers ----------
-def normalize_cols(cols: pd.Index) -> pd.Index:
-    """Collapse whitespace/newlines, trim, upper-case, replace spaces with underscores."""
-    return (
-        cols.astype(str)
-            .str.replace(r"\s+", " ", regex=True)
-            .str.strip()
-            .str.upper()
-            .str.replace(" ", "_")
-    )
-
-def default_from(df: pd.DataFrame, col: str, fallback: float) -> float:
-    """Pick a sensible default from the sheet if available; otherwise fallback."""
-    if col in df.columns:
-        s = pd.to_numeric(df[col], errors="coerce").dropna()
-        if not s.empty:
-            return float(round(s.median(), 2))
-    return float(fallback)
-
 # ---------- data ----------
 homeDataframe = SheetNames(df="df", dataPath=dataPath)
 
 # ---------- UI header ----------
-st.title("Bienvenido Carlos")
-st.markdown("#### Escoge los productos que tú quieras")
+st.title("Welcome")
+st.markdown("#### Choose any products!")
 
 sheetName = homeDataframe.displayOptions(sheetList=homeDataframe.sheetNames())
 
@@ -55,10 +35,8 @@ for c in ["COSTO_TOTAL", "BUNCH_X_CAJA", "PRECIO_KILO", "DUTIES", "PRICE_CLIENTE
     if c in df.columns:
         df[c] = pd.to_numeric(df[c], errors="coerce")
 
-
 # ---------- Per-item adders (bilingual, intuitive, real defaults from sheet) ----------
 with st.sidebar:
-    st.header("Productos seleccionados/Selected Products")
     st.markdown("#### Parámetros de Costo / Cost Parameters (sumas)")
     
     # ---------- CONSTANTS (bilingual, intuitive, with real defaults) ----------
@@ -111,6 +89,7 @@ event = st.dataframe(
 
 # ---------- Compute final view for selected rows (now shown & downloaded from sidebar) ----------
 with st.sidebar:
+    st.header("Productos seleccionados/Selected Products")
     products = event.selection.rows
     newDF = df.iloc[products].copy() if products else pd.DataFrame()
 
@@ -120,7 +99,7 @@ with st.sidebar:
         else:
             # Base cost shown tod the user
             # Flete Miami
-
+            
             # Volume
             length = df['LENGTH']
             width = df['WIDTH']
