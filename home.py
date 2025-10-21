@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from rowItem import RowItem, SheetNames
-from helper import normalize_cols
+from helper import normalize_cols, freight_size
 
 st.set_page_config(page_title="Heinens", initial_sidebar_state='auto')
 
@@ -42,7 +42,7 @@ with st.sidebar:
     # Constants
 with st.sidebar.expander("⚙️ Constantes / Constants (modificables)", expanded=False):
     ratioFleteInp = st.number_input("Divisor Volumen / Volume Divisor (Ratio Flete)", min_value=1.0, value=6000.0, step=10.0)
-    dutyMulti = st.number_input("Multiplicador Derechos / Duties Multiplier", min_value=0.0, value=0.218, step=0.001, format="%.3f")
+    dutyMultiInp = st.number_input("Multiplicador Derechos / Duties Multiplier", min_value=0.0, value=0.218, step=0.001, format="%.3f")
     wetPackConstInp = st.number_input("cm → pulgadas / cm → inches (2.54)", min_value=0.0001, value=2.54, step=0.01)
     cubeConstInp = st.number_input("in³ por ft³ / in³ per ft³ (1728)", min_value=1.0, value=1728.0, step=1.0)
     precioKiloInp = st.number_input("Price per Kilo/ Precio por Kilo", min_value=1.0, value=1.95, step=1.0)
@@ -94,10 +94,28 @@ with st.sidebar:
         if "COSTO_TOTAL" not in newDF.columns:
             st.error(f"No se encontró la columna COSTO_TOTAL. Columnas disponibles: {list(newDF.columns)}")
         else:
-            # Base cost shown tod the user
+            # Base cost shown to the user
             # Flete Miami
             
-            # Volume
+            
+            # freightColumnsDropped = ['VOLUME','ROUNDED_VOLUME','BQT_FREIGHT_PRICE','TARIFF_DUTY']
+            # df = df.drop(columns=freightColumnsDropped)
+
+            # freight_size(dataframe=df,
+            #             lengthCol='LENGTH',
+            #             widthCol='WIDTH',
+            #             heightCol='HEIGHT',
+            #             freightRatioInput=ratioFleteInp,
+            #             dutyMultiplierInput=dutyMultiInp,
+            #             bqtPriceCol='BQT_PRICE',
+            #             bunchPerBoxCol='BUNCH_PER_BOX',
+            #             tariffDutyCol='TARIFF_DUTY',
+            #             priceKiloInput=precioKiloInp,
+            #             extrasCol='EXTRAS',
+            #             boxTotalCol='BOX_TOTAL',
+            #             bqtFreightPriceCol='BQT_PRICE')
+
+            # # Volume
             length = df['LENGTH']
             width = df['WIDTH']
             height = df['HEIGHT']
@@ -112,7 +130,7 @@ with st.sidebar:
             df['PRECIO_CAJA'] = roundedVol * df['PRECIO_KILO']
 
             # Duties
-            dutyMultiplier = dutyMulti
+            dutyMultiplier = dutyMultiInp
             precioBQT = df['PRECIO/_BQT']
             bunchCaja = df['BUNCH_X_CAJA']
             df['DUTIES'] = ( precioBQT * bunchCaja) * dutyMultiplier
