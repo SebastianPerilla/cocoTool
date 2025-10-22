@@ -110,6 +110,8 @@ class WetPacks:
             self.dataframe['CUBE'] = 2.89  # fixed cube when button is pressed
         else:
             wetPackVolume = (wpHt * wpWd * wpDp)
+            self.wetPackPriceInput = 0
+            self.wetPackTransportPalletPriceInput = 0
             self.dataframe['CUBE'] = pd.to_numeric((wetPackVolume / cubeConst)).round(2)
             
         wpCube = self.dataframe['CUBE']
@@ -117,8 +119,13 @@ class WetPacks:
         return wpCube
 
     def wpBQTPrice(self): 
-        wetPackPrice = self.wetPackPriceInput
-        transportPallet = self.wetPackTransportPalletPriceInput
+        
+        if self.wetPackButton:
+            wetPackPrice = self.wetPackPriceInput
+            transportPallet = self.wetPackTransportPalletPriceInput
+        else:
+            wetPackPrice = 0
+            transportPallet= 0 
 
         # Pack size
         self.dataframe['PACK'] = self.dataframe[self.bunchPerBoxCol]
