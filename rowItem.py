@@ -14,7 +14,7 @@ class RowItem:
         self.df = self.df.drop(columns=self.df.columns[0])
 
         # Change the Headers to the 2nd Row of the Dataframe
-        header_row_idx = self.df[self.df.iloc[:, 0] == "PRODUCT"].index[0]
+        header_row_idx = self.df[self.df.iloc[:, 0] == "PRODUCT"].index[1]
         self.df.columns = self.df.iloc[header_row_idx]
         self.df = self.df.drop(range(header_row_idx + 1)).reset_index(drop=True)
 

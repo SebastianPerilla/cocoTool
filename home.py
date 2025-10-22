@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from rowItem import RowItem, SheetNames
 from helper import normalize_cols
-from colProcessing import FreightSize
+from colProcessing import FreightSize, WetPacks, FreightEEUU
 
 st.set_page_config(page_title="Heinens", initial_sidebar_state='auto')
 
@@ -47,14 +47,14 @@ with st.sidebar.expander("⚙️ Constantes / Constants (modificables)", expande
     wetPackConstInp = st.number_input("cm → pulgadas / cm → inches (2.54)", min_value=0.0001, value=2.54, step=0.01)
     cubeConstInp = st.number_input("in³ por ft³ / in³ per ft³ (1728)", min_value=1.0, value=1728.0, step=1.0)
     precioKiloInp = st.number_input("Price per Kilo/ Precio por Kilo", min_value=1.0, value=1.95, step=1.0)
-    pricePerCube_const = st.number_input("Precio por Cubo / Price per Cube", min_value=0.0, value=2.18, step=0.01)
-    pricePerPiece_const = st.number_input("Precio por Pieza / Price per Piece", min_value=0.0, value=0.50, step=0.01)
+    pricePerCubeConst = st.number_input("Precio por Cubo / Price per Cube", min_value=0.0, value=2.18, step=0.01)
+    pricePerPieceConst = st.number_input("Precio por Pieza / Price per Piece", min_value=0.0, value=0.50, step=0.01)
     fuelConst = st.number_input("Constante Combustible / Fuel Constant", min_value=0.0, value=0.30, step=0.01)
     
 with st.sidebar.expander("Wet Pack (Costo Adicional)",  expanded=False):
     wetPackButton = st.checkbox(label='Añadir Wet Pack (MUST PRESS)')
     wetPackPriceInp = st.number_input("Wet Pack Price", min_value=0.00, value=0.00, step=1.00)
-    wetPackTransPal = st.number_input("Transportation Palette", min_value=0.00, value=0.00, step=1.00)
+    wetPackTransPalInp = st.number_input("Transportation Palette", min_value=0.00, value=0.00, step=1.00)
     
     st.markdown("---")
 
@@ -92,15 +92,16 @@ with st.sidebar:
     newDF = df.iloc[products].copy() if products else pd.DataFrame()
 
     if not newDF.empty:
-        if "COSTO_TOTAL" not in newDF.columns:
-            st.error(f"No se encontró la columna COSTO_TOTAL. Columnas disponibles: {list(newDF.columns)}")
+        if "PRODUCT" not in newDF.columns:
+            st.error(f"Unable to find the PRODUCT Column. Available Columns: {list(newDF.columns)}")
         else:
             # Base cost shown to the user
-            
-            # freightColumnsDropped = ['BOX_TOTAL','BOX_PRICE','TARIFF_DUTY','BQT_FREIGHT_PRICE','PACK','VOLUME','ROUNDED_VOLUME','BQT_FREIGHT_PRICE','TARIFF_DUTY', 'WP_HEIGHT', 'WP_WIDTH', 'WP_DEPTH', 'CUBE', 'PRICE_PER_BUNCH', 'WET_PACK_BQT_PRICE', 'CUBE_WET_PACK', 'FUEL_PRICE', 'PRICE_PER_BOX', 'FREIGHT_PRICE_PER_BQT_USA']
-            # df = df.drop(columns=freightColumnsDropped)
+            freightColumnsDropped = ['BQT_PRICE','FLETE_MIAMI', 'WET_PACK', 'FREIGHT' ,'TOTAL_COST','BOX_TOTAL','BOX_PRICE','TARIFF_DUTY','BQT_FREIGHT_PRICE','PACK','VOLUME','ROUNDED_VOLUME','BQT_FREIGHT_PRICE','TARIFF_DUTY', 'WP_HEIGHT', 'WP_WIDTH', 'WP_DEPTH', 'CUBE', 'PRICE_PER_BUNCH', 'WET_PACK_BQT_PRICE', 'CUBE_WET_PACK', 'FUEL_PRICE', 'PRICE_PER_BOX', 'FREIGHT_PRICE_PER_BQT_USA']
+            df = df.drop(columns=freightColumnsDropped)
 
-            freightCalc = FreightSize(dataframe=df,
+            df['BQT_PRICE'] = df['FARM_PRICE'] * df['STEM_BUNCH']
+
+            freightSize = FreightSize(dataframe=df,
                             lengthCol='LENGTH',
                             widthCol='WIDTH',
                             heightCol='HEIGHT',
@@ -112,121 +113,46 @@ with st.sidebar:
                             extrasCol='EXTRAS',
                             boxTotalCol='BOX_TOTAL')
 
-            # # Volume
-            length = df['LENGTH']
-            width = df['WIDTH']
-            height = df['HEIGHT']
-            ratioFlete = ratioFleteInp
-
-            df['VOLUME'] = (length * width * height) / ratioFlete  # Volume
-            df['ROUNDED_VOLUME'] = np.ceil(df['VOLUME'])    # Rounded Volume
-
-            roundedVol = df['ROUNDED_VOLUME']
-
-            # Precio Caja
-            df['PRECIO_CAJA'] = roundedVol * df['PRECIO_KILO']
-
-            # Duties
-            dutyMultiplier = dutyMultiInp
-            precioBQT = df['PRECIO/_BQT']
-            bunchCaja = df['BUNCH_X_CAJA']
-            df['DUTIES'] = ( precioBQT * bunchCaja) * dutyMultiplier
-
-
-            #FLETE
-            precioKilo = precioKiloInp
-            precioCaja = roundedVol * precioKilo
-            extrasBuffer = df['EXTRAS']
-            duties = df['DUTIES']
-            totalCaja = df['TOTAL_CAJA']
-            df['FLETE_/BQT'] = pd.to_numeric(((precioCaja + extrasBuffer + duties) / totalCaja)).round(2)
-                        
-            # WET PACKS
-
-            # HT
-            wetPackConst = wetPackConstInp
-            df['HT'] = df['LENGTH'] / wetPackConst
-
-            # WD
-            df['WD'] = df['WIDTH'] / wetPackConst
-
-            # DP
-            df['DP'] = df['HEIGHT'] / wetPackConst
-
-            # CUBE
-            cubeConst = cubeConstInp
-            ht = df['HT']
-            wd = df['WD']
-            dp = df['DP']
-            
-            if wetPackButton:
-                df['CUBE'] = 2.89
-                # print(df['CUBE'])
-            else:
-                df['CUBE'] = pd.to_numeric(((ht * wd * dp) / cubeConst)).round(2)
-            
-            # Price Bunch
-            wetPackPrice = wetPackPriceInp
-            df['PACK']= df['BUNCH_X_CAJA']
-            wetPackSize = df['PACK']
-            # print(f"Wetpack Pack", wetPackSize[0])
-            # print('Wet Pack Price', wetPackPrice)
-
-            df['PRICE_/BUNCH'] = pd.to_numeric(( wetPackPrice / wetPackSize)).round(2)
-            # print("Wet Pack Price/BUCH",df['PRICE_/BUNCH'])
-            
-            # WP/BQT
-            priceBunch = df['PRICE_/BUNCH']
-            transportPallet = wetPackTransPal
-            # print(f"Transport Pallet",transportPallet)
-            df['WP/BQT'] = priceBunch + transportPallet   
-            # print("WT/BQT",df['WP/BQT'][0])        
-
-            # Freight
-            cube = df['CUBE']
-            df['CUBE_WET_PACK'] = cube.round(2)
-
-            # Price Per Piece
-            cubeWetPack = pd.to_numeric(df['CUBE_WET_PACK'])
-            # print(cubeWetPack[0])
-            pricePerCube = pricePerCube_const
-            pricePerPiece = pricePerPiece_const
-            fuelConst = fuelConst
-            df['FUEL'] = ((pricePerCube * pricePerPiece * cubeWetPack) * fuelConst).round(2)
-
-            # Price Per Box
-            fuel = df['FUEL']
-            # print(f"Fuel", fuel[0])
-
-            df['PRICE_PER_BOX'] = pd.to_numeric((cubeWetPack * (pricePerCube + pricePerPiece + fuel))).round(2)
+            wetPackCalc = WetPacks(dataframe=df,
+                                   wetPackConstantInput=wetPackConstInp,
+                                   wetPackPriceInput=wetPackPriceInp,
+                                   cubeConstantInput=cubeConstInp,
+                                   wetPackTransportPalletPriceInput=wetPackTransPalInp,
+                                   lengthCol='LENGTH',
+                                   widthCol='WIDTH',
+                                   heightCol="HEIGHT",
+                                   bunchPerBoxCol='BUNCH_PER_BOX',
+                                   wetPackButton=wetPackButton)
             
             
-            # FEEUU / BQT
-            packs = df['PACK']
-            pricePerBox = df['PRICE_PER_BOX']
-            df['F.EEUU/_BQT'] = pd.to_numeric((pricePerBox / packs)).round(2)
+            freightCostEEUU = FreightEEUU(dataframe=df,
+                                          wetpacks=wetPackCalc,
+                                          pricePerCubeConstantInput=pricePerCubeConst,
+                                          pricePerPieceConstantInput=pricePerPieceConst,
+                                          fuelConstantInput=fuelConst)
+            
              
+            # BQT PRICE + FLETE MIAMI + WET PACK + FREIGHT = TOTAL COST
+            costoTotal = df['BQT_PRICE'] + freightSize.freightSize() + wetPackCalc.wpBQTPrice() + freightCostEEUU.freightCostUSA()
             
-            costoTotal = df['PRECIO/_BQT'] + freightCalc.freight_size() + df['F.EEUU/_BQT'] + df['WP/BQT']
             
-            
-            newDF["COSTO_TOTAL"] = pd.to_numeric(costoTotal, errors="coerce").round(2)
+            newDF["TOTAL_COST"] = pd.to_numeric(costoTotal, errors="coerce").round(2)
 
             # <-- use the sidebar variables (adders) to affect price
            
             # effective cost used only for the calculation; we don't show it
-            effective_cost = newDF["COSTO_TOTAL"]
+            effective_cost = newDF["TOTAL_COST"]
 
             # price = (effective cost) * (1 + markup)
-            newDF["PRICE_CLIENTE"] = (effective_cost * (1 + markup)).round(2)
+            newDF["CLIENT_PRICE"] = (effective_cost * (1 + markup)).round(2)
 
             # print(newDF['PRICE_CLIENTE'][0])
             # Show ONLY these columns (no costo ajustado)
-            display_cols = [c for c in ["PRODUCT", "BUNCH_X_CAJA", "COSTO_TOTAL", "PRICE_CLIENTE"] if c in newDF.columns]
+            display_cols = [c for c in ["PRODUCT", "BUNCH_PER_BOX", "TOTAL_COST", "CLIENT_PRICE"] if c in newDF.columns]
             st.dataframe(newDF[display_cols], width="stretch", hide_index=True)
 
             # CSV download WITHOUT COSTO_TOTAL
-            download_cols = [c for c in display_cols if c != "COSTO_TOTAL"]
+            download_cols = [c for c in display_cols if c != "TOTAL_COST"]
             csv_bytes = newDF[download_cols].to_csv(index=False).encode("utf-8")
             st.download_button(
                 label="⬇️ Descargar CSV / Download CSV (sin Costo Total)",

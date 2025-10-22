@@ -56,7 +56,7 @@ class FreightSize:
         return tariffDuty
 
 
-    def freight_size(self):
+    def freightSize(self):
         # Freight calculation
         boxPrice = self.boxPrice()
         extrasBuffer = self.dataframe[self.extrasCol]
@@ -94,60 +94,57 @@ class WetPacks:
     def wpCube(self):
         # Calculate Wet Pack dimensions and cube.
         wetPackConst = self.wetPackConstantInput
-        df = self.dataframe
 
         # Length, Width, Height adjustments
-        df['WP_LENGTH'] = df[self.lengthCol] / wetPackConst
-        df['WP_WIDTH'] = df[self.widthCol] / wetPackConst
-        df['WP_DEPTH'] = df[self.heightCol] / wetPackConst
+        self.dataframe['WP_LENGTH'] = self.dataframe[self.lengthCol] / wetPackConst
+        self.dataframe['WP_WIDTH'] = self.dataframe[self.widthCol] / wetPackConst
+        self.dataframe['WP_DEPTH'] = self.dataframe[self.heightCol] / wetPackConst
 
-        wpHt = df['WP_LENGTH']
-        wpWd = df['WP_WIDTH']
-        wpDp = df['WP_DEPTH']
+        wpHt = self.dataframe['WP_LENGTH']
+        wpWd = self.dataframe['WP_WIDTH']
+        wpDp = self.dataframe['WP_DEPTH']
 
         # Cube Calculation
         cubeConst = self.cubeConstantInput
         if self.wetPackButton:
-            df['CUBE'] = 2.89  # fixed cube when button is pressed
+            self.dataframe['CUBE'] = 2.89  # fixed cube when button is pressed
         else:
             wetPackVolume = (wpHt * wpWd * wpDp)
-            df['CUBE'] = pd.to_numeric((wetPackVolume / cubeConst)).round(2)
+            self.dataframe['CUBE'] = pd.to_numeric((wetPackVolume / cubeConst)).round(2)
             
-        wpCube = df['CUBE']
+        wpCube = self.dataframe['CUBE']
             
         return wpCube
 
-    def wpBQTPrice(self):
-        # Calculate Wet Pack BQT (bunch) price.
-        df = self.dataframe
+    def wpBQTPrice(self): 
         wetPackPrice = self.wetPackPriceInput
         transportPallet = self.wetPackTransportPalletPriceInput
 
         # Pack size
-        df['PACK'] = df[self.bunchPerBoxCol]
-        wetPackSize = df['PACK']
+        self.dataframe['PACK'] = self.dataframe[self.bunchPerBoxCol]
+        wetPackSize = self.dataframe['PACK']
 
         # Price per bunch
-        df['PRICE_PER_BUNCH'] = pd.to_numeric((wetPackPrice / wetPackSize)).round(2)
-        priceBunch = df['PRICE_PER_BUNCH']
+        self.dataframe['PRICE_PER_BUNCH'] = pd.to_numeric((wetPackPrice / wetPackSize)).round(2)
+        priceBunch = self.dataframe['PRICE_PER_BUNCH']
 
         # Final BQT price
-        df['WET_PACK_BQT_PRICE'] = priceBunch + transportPallet
-        wpBQTPrice = df['WET_PACK_BQT_PRICE']
+        self.dataframe['WET_PACK_BQT_PRICE'] = priceBunch + transportPallet
+        wpBQTPrice = self.dataframe['WET_PACK_BQT_PRICE']
         
         return wpBQTPrice        
 
 
 
-class FreightEEUU(WetPacks):
-
-    def __init__(self, dataframe: pd.DataFrame,
+class FreightEEUU:
+    def __init__(self, 
+                 dataframe: pd.DataFrame,
+                 wetpacks: "WetPacks",
                  pricePerCubeConstantInput,
                  pricePerPieceConstantInput,
-                 fuelConstantInput
-                 ):
-        super().__init__(dataframe=dataframe)
+                 fuelConstantInput):
         self.dataframe = dataframe
+        self.wetpacks = wetpacks
         self.pricePerCubeConstantInput = pricePerCubeConstantInput
         self.pricePerPieceConstantInput = pricePerPieceConstantInput
         self.fuelConstantInput = fuelConstantInput
@@ -155,7 +152,7 @@ class FreightEEUU(WetPacks):
 
     # Fuel Price
     def fuelPrice(self):
-        wpCube = self.wpCube()         
+        wpCube = self.wetpacks.wpCube()         
         pricePerCube = self.pricePerCubeConstantInput
         pricePerPiece = self.pricePerPieceConstantInput
         fuelConst = self.fuelConstantInput
@@ -167,7 +164,7 @@ class FreightEEUU(WetPacks):
         
     # Price Box
     def pricePerBox(self):
-        self.dataframe['PRICE_PER_BOX'] = pd.to_numeric((self.wpCube() * (self.pricePerCubeConstantInput + self.pricePerPieceConstantInput + self.fuelPrice()))).round(2)
+        self.dataframe['PRICE_PER_BOX'] = pd.to_numeric((self.wetpacks.wpCube() * (self.pricePerCubeConstantInput + self.pricePerPieceConstantInput + self.fuelPrice()))).round(2)
         pricePerBox = self.dataframe['PRICE_PER_BOX']
     
         return pricePerBox
