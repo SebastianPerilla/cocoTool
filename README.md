@@ -1,6 +1,6 @@
 # cocoTool
 
-Small Streamlit app for my Uncle (Coco) to parse Excel price sheets, normalize product rows, compute freight / wet-pack / duty costs and produce client-ready pricing exports. This is intended to enable him to work more efficiently and, as a result, provide prices to clients as soon as possible. 
+Small Streamlit app for my uncle (Coco) to work more efficienyl  with his Excel/XLSX price sheets, product rows, compute freight / wet-pack / duty costs and produce client-ready pricing exports. This is intended to enable him to work smarter and as a result, provide prices to clients. 
 
 ## Overview
 cocoTool ingests an Excel workbook (sheet selected by the user), finds the header row, normalizes column names, and runs a sequence of cost calculations to produce final client prices. Calculations are separated into classes to keep logic modular and testable.
