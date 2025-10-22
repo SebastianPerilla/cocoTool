@@ -21,7 +21,7 @@ else:
 # Data
 homeDataframe = SheetNames(df="df", dataPath=dataPath)
 
-# ---------- UI header ----------
+# Header
 st.title("Welcome")
 st.markdown("#### Choose any products!")
 
@@ -31,11 +31,10 @@ sheetName = homeDataframe.displayOptions(sheetList=homeDataframe.sheetNames())
 df = RowItem(df="df", dataPath=dataPath, chosenSheet=sheetName).produceDataframe()
 df.columns = normalize_cols(df.columns)
 
-# ---------- Per-item adders (bilingual, intuitive, real defaults from sheet) ----------
+# Custom Parameters
 with st.sidebar:
     st.markdown("#### Parámetros de Costo / Cost Parameters (sumas)")
     
-    # Constants
 # Constants
 with st.sidebar.expander("⚙️ Constantes / Constants (modificables)", expanded=False):
     col1, col2 = st.columns(2)
@@ -84,7 +83,7 @@ with st.sidebar.expander("Wet Pack (Costo Adicional)",  expanded=False):
     st.markdown("---")
 
 with st.sidebar:
-    # ======== NEW: Margin presets (steps of 5%), default 15% ========
+    # Margin/Markup Calculator
     margin_options = list(range(0, 101, 5))
     margin_pct = st.selectbox(label="📈 Margen / Margin (% of price)",
                               options=margin_options,
@@ -100,7 +99,7 @@ with st.sidebar:
     )
 
 
-# ---------- Main selector (first column is usually PRODUCT) ----------
+# Main Selection
 event = st.dataframe(
     df.iloc[:, 0],
     width="stretch",
@@ -110,7 +109,7 @@ event = st.dataframe(
     hide_index=True,
 )
 
-# ---------- Compute final view for selected rows (now shown & downloaded from sidebar) ----------
+# Final Sidebar View
 with st.sidebar:
     st.header("Productos seleccionados/Selected Products")
     products = event.selection.rows
@@ -173,7 +172,7 @@ with st.sidebar:
             display_cols = [c for c in ["PRODUCT", "BUNCH_PER_BOX", "TOTAL_COST", "CLIENT_PRICE"] if c in newDF.columns]
             st.dataframe(newDF[display_cols], width="stretch", hide_index=True)
             
-            # CSV download WITHOUT COSTO_TOTAL
+            # CSV download WITHOUT Total Cost (Clients cant know this shizzles)
             download_cols = [c for c in display_cols if c != "TOTAL_COST"]
             csv_bytes = newDF[download_cols].to_csv(index=False).encode("utf-8")
             st.download_button(

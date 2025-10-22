@@ -14,12 +14,12 @@ class FreightSize:
         self.widthCol = widthCol                        # Width Column Name
         self.heightCol = heightCol                      # Height Column Name
         self.freightRatioInput = freightRatioInput      # Freight Ratio Input Number
-        self.dutyMultiplierInput = dutyMultiplierInput
-        self.bqtPriceCol = bqtPriceCol
-        self.bunchPerBoxCol = bunchPerBoxCol
-        self.priceKiloInput = priceKiloInput
-        self.extrasCol = extrasCol
-        self.boxTotalCol = boxTotalCol
+        self.dutyMultiplierInput = dutyMultiplierInput  # Tariff Multiplier Input
+        self.bqtPriceCol = bqtPriceCol                  # BQT Price Column
+        self.bunchPerBoxCol = bunchPerBoxCol            # Bunch Per Box
+        self.priceKiloInput = priceKiloInput            # Price Kilo Input
+        self.extrasCol = extrasCol                      # Extra (Chosen Buffer)
+        self.boxTotalCol = boxTotalCol                  # Box Total 
       
       
     def roundedVolumeCalc(self):
