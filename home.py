@@ -100,17 +100,17 @@ with st.sidebar:
             # freightColumnsDropped = ['BOX_TOTAL','BOX_PRICE','TARIFF_DUTY','BQT_FREIGHT_PRICE','PACK','VOLUME','ROUNDED_VOLUME','BQT_FREIGHT_PRICE','TARIFF_DUTY', 'WP_HEIGHT', 'WP_WIDTH', 'WP_DEPTH', 'CUBE', 'PRICE_PER_BUNCH', 'WET_PACK_BQT_PRICE', 'CUBE_WET_PACK', 'FUEL_PRICE', 'PRICE_PER_BOX', 'FREIGHT_PRICE_PER_BQT_USA']
             # df = df.drop(columns=freightColumnsDropped)
 
-            # freightCalc = FreightSize(dataframe=df,
-            #                 lengthCol='LENGTH',
-            #                 widthCol='WIDTH',
-            #                 heightCol='HEIGHT',
-            #                 freightRatioInput=ratioFleteInp,
-            #                 dutyMultiplierInput=dutyMultiInp,
-            #                 bqtPriceCol='BQT_PRICE',
-            #                 bunchPerBoxCol='BUNCH_PER_BOX',
-            #                 priceKiloInput=precioKiloInp,
-            #                 extrasCol='EXTRAS',
-            #                 boxTotalCol='BOX_TOTAL')
+            freightCalc = FreightSize(dataframe=df,
+                            lengthCol='LENGTH',
+                            widthCol='WIDTH',
+                            heightCol='HEIGHT',
+                            freightRatioInput=ratioFleteInp,
+                            dutyMultiplierInput=dutyMultiInp,
+                            bqtPriceCol='BQT_PRICE',
+                            bunchPerBoxCol='BUNCH_PER_BOX',
+                            priceKiloInput=precioKiloInp,
+                            extrasCol='EXTRAS',
+                            boxTotalCol='BOX_TOTAL')
 
             # # Volume
             length = df['LENGTH']
@@ -207,7 +207,7 @@ with st.sidebar:
             df['F.EEUU/_BQT'] = pd.to_numeric((pricePerBox / packs)).round(2)
              
             
-            costoTotal = df['PRECIO/_BQT'] + df['FLETE_/BQT'] + df['F.EEUU/_BQT'] + df['WP/BQT']
+            costoTotal = df['PRECIO/_BQT'] + freightCalc.freight_size() + df['F.EEUU/_BQT'] + df['WP/BQT']
             
             
             newDF["COSTO_TOTAL"] = pd.to_numeric(costoTotal, errors="coerce").round(2)

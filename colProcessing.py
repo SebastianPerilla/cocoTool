@@ -9,11 +9,11 @@ class FreightSize:
                 priceKiloInput: float,
                 extrasCol: str, boxTotalCol: str,):
         
-        self.dataframe = dataframe
-        self.lengthCol = lengthCol
-        self.widthCol = widthCol
-        self.heightCol = heightCol
-        self.freightRatioInput = freightRatioInput
+        self.dataframe = dataframe                      # DataFrame Name
+        self.lengthCol = lengthCol                      # Length Column Name
+        self.widthCol = widthCol                        # Width Column Name
+        self.heightCol = heightCol                      # Height Column Name
+        self.freightRatioInput = freightRatioInput      # Freight Ratio Input Number
         self.dutyMultiplierInput = dutyMultiplierInput
         self.bqtPriceCol = bqtPriceCol
         self.bunchPerBoxCol = bunchPerBoxCol
@@ -91,8 +91,8 @@ class WetPacks:
         self.bunchPerBoxCol = bunchPerBoxCol
         self.wetPackButton = wetPackButton
 
-    def wpDimension(self):
-        """Calculate Wet Pack dimensions and cube."""
+    def wpCube(self):
+        # Calculate Wet Pack dimensions and cube.
         wetPackConst = self.wetPackConstantInput
         df = self.dataframe
 
@@ -113,10 +113,12 @@ class WetPacks:
             wetPackVolume = (wpHt * wpWd * wpDp)
             df['CUBE'] = pd.to_numeric((wetPackVolume / cubeConst)).round(2)
             
-        return df['CUBE']
+        wpCube = df['CUBE']
+            
+        return wpCube
 
-    def wpBQT(self):
-        """Calculate Wet Pack BQT (bunch) price."""
+    def wpBQTPrice(self):
+        # Calculate Wet Pack BQT (bunch) price.
         df = self.dataframe
         wetPackPrice = self.wetPackPriceInput
         transportPallet = self.wetPackTransportPalletPriceInput
@@ -131,18 +133,50 @@ class WetPacks:
 
         # Final BQT price
         df['WET_PACK_BQT_PRICE'] = priceBunch + transportPallet
+        wpBQTPrice = df['WET_PACK_BQT_PRICE']
         
-        return df['WET_PACK_BQT_PRICE']
+        return wpBQTPrice        
 
-    def calculate(self):
-        """Convenience method to run all calculations."""
-        wpCube = self.wpDimension()
-        wpBQTPrice = self.wpBQT()
-        return wpCube, wpBQTPrice
+
+
+class FreightEEUU(WetPacks):
+
+    def __init__(self, dataframe: pd.DataFrame,
+                 pricePerCubeConstantInput,
+                 pricePerPieceConstantInput,
+                 fuelConstantInput
+                 ):
+        super().__init__(dataframe=dataframe)
+        self.dataframe = dataframe
+        self.pricePerCubeConstantInput = pricePerCubeConstantInput
+        self.pricePerPieceConstantInput = pricePerPieceConstantInput
+        self.fuelConstantInput = fuelConstantInput
+
+
+    # Fuel Price
+    def fuelPrice(self):
+        wpCube = self.wpCube()         
+        pricePerCube = self.pricePerCubeConstantInput
+        pricePerPiece = self.pricePerPieceConstantInput
+        fuelConst = self.fuelConstantInput
         
-
-
-def freight_cost(datafram: pd.DataFrame):
-    pass
-
-
+        self.dataframe['FUEL'] = ((pricePerCube * pricePerPiece * wpCube) * fuelConst).round(2)
+        fuelPrice = self.dataframe['FUEL']
+        
+        return fuelPrice
+        
+    # Price Box
+    def pricePerBox(self):
+        self.dataframe['PRICE_PER_BOX'] = pd.to_numeric((self.wpCube() * (self.pricePerCubeConstantInput + self.pricePerPieceConstantInput + self.fuelPrice()))).round(2)
+        pricePerBox = self.dataframe['PRICE_PER_BOX']
+    
+        return pricePerBox
+    
+    # Freight USA Cost Per BQT
+    def freightCostUSA(self):    
+        packs = self.dataframe['BUNCH_PER_BOX']
+        self.dataframe['FREIGHT_PRICE_PER_BQT_USA'] = pd.to_numeric((self.pricePerBox() / packs)).round(2)
+        
+        freightPricePerBQTUSA =  self.dataframe['FREIGHT_PRICE_PER_BQT_USA']
+        
+        return freightPricePerBQTUSA
