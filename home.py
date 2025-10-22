@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from rowItem import RowItem, SheetNames
-from helper import normalize_cols, freight_size
+from helper import normalize_cols
+from colProcessing import FreightSize
 
 st.set_page_config(page_title="Heinens", initial_sidebar_state='auto')
 
@@ -95,25 +96,21 @@ with st.sidebar:
             st.error(f"No se encontró la columna COSTO_TOTAL. Columnas disponibles: {list(newDF.columns)}")
         else:
             # Base cost shown to the user
-            # Flete Miami
             
-            
-            # freightColumnsDropped = ['VOLUME','ROUNDED_VOLUME','BQT_FREIGHT_PRICE','TARIFF_DUTY']
+            # freightColumnsDropped = ['BOX_TOTAL','BOX_PRICE','TARIFF_DUTY','BQT_FREIGHT_PRICE','PACK','VOLUME','ROUNDED_VOLUME','BQT_FREIGHT_PRICE','TARIFF_DUTY', 'WP_HEIGHT', 'WP_WIDTH', 'WP_DEPTH', 'CUBE', 'PRICE_PER_BUNCH', 'WET_PACK_BQT_PRICE', 'CUBE_WET_PACK', 'FUEL_PRICE', 'PRICE_PER_BOX', 'FREIGHT_PRICE_PER_BQT_USA']
             # df = df.drop(columns=freightColumnsDropped)
 
-            # freight_size(dataframe=df,
-            #             lengthCol='LENGTH',
-            #             widthCol='WIDTH',
-            #             heightCol='HEIGHT',
-            #             freightRatioInput=ratioFleteInp,
-            #             dutyMultiplierInput=dutyMultiInp,
-            #             bqtPriceCol='BQT_PRICE',
-            #             bunchPerBoxCol='BUNCH_PER_BOX',
-            #             tariffDutyCol='TARIFF_DUTY',
-            #             priceKiloInput=precioKiloInp,
-            #             extrasCol='EXTRAS',
-            #             boxTotalCol='BOX_TOTAL',
-            #             bqtFreightPriceCol='BQT_PRICE')
+            # freightCalc = FreightSize(dataframe=df,
+            #                 lengthCol='LENGTH',
+            #                 widthCol='WIDTH',
+            #                 heightCol='HEIGHT',
+            #                 freightRatioInput=ratioFleteInp,
+            #                 dutyMultiplierInput=dutyMultiInp,
+            #                 bqtPriceCol='BQT_PRICE',
+            #                 bunchPerBoxCol='BUNCH_PER_BOX',
+            #                 priceKiloInput=precioKiloInp,
+            #                 extrasCol='EXTRAS',
+            #                 boxTotalCol='BOX_TOTAL')
 
             # # Volume
             length = df['LENGTH']
