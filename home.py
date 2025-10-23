@@ -5,7 +5,7 @@ from rowItem import RowItem, SheetNames
 from helper import normalize_cols
 from colProcessing import FreightSize, WetPacks, FreightEEUU
 
-st.set_page_config(page_title="Heinens", initial_sidebar_state='auto')
+st.set_page_config(page_title="CocoTool", initial_sidebar_state='auto')
 
 # File Upload
 uploaded_file = st.file_uploader(label="Upload your Excel/XLSX file", type=["xlsx"])
@@ -33,50 +33,50 @@ df.columns = normalize_cols(df.columns)
 
 # Custom Parameters
 with st.sidebar:
-    st.markdown("#### Parámetros de Costo / Cost Parameters (sumas)")
+    st.markdown("# Cost Parameters")
     
 # Constants
-with st.sidebar.expander("⚙️ Constantes / Constants (modificables)", expanded=False):
+with st.sidebar.expander("⚙️ Constants (Modifiable)", expanded=False):
     col1, col2 = st.columns(2)
 
     with col1:
         ratioFleteInp = st.number_input(
-            "Divisor Volumen / Volume Divisor (Ratio Flete)",
+            "Volume Divisor (Ratio Flete)",
             min_value=1.0, value=6000.0, step=10.0
         )
         dutyMultiInp = st.number_input(
-            "Multiplicador Derechos / Duties Multiplier",
+            "Duties Multiplier",
             min_value=0.0, value=0.218, step=0.001, format="%.3f"
         )
         wetPackConstInp = st.number_input(
-            "cm → pulgadas / cm → inches (2.54)",
+            "cm → inches (2.54)",
             min_value=0.0001, value=2.54, step=0.01
         )
         cubeConstInp = st.number_input(
-            "in³ por ft³ / in³ per ft³ (1728)",
+            "in³ per ft³ (1728)",
             min_value=1.0, value=1728.0, step=1.0
         )
 
     with col2:
         precioKiloInp = st.number_input(
-            "Price per Kilo / Precio por Kilo",
+            "Price per Kilo",
             min_value=1.0, value=1.95, step=1.0
         )
         pricePerCubeConst = st.number_input(
-            "Precio por Cubo / Price per Cube",
+            "Price per Cube",
             min_value=0.0, value=2.18, step=0.01
         )
         pricePerPieceConst = st.number_input(
-            "Precio por Pieza / Price per Piece",
+            "Price per Piece",
             min_value=0.0, value=0.50, step=0.01
         )
         fuelConst = st.number_input(
-            "Constante Combustible / Fuel Constant",
+            "Fuel Constant",
             min_value=0.0, value=0.30, step=0.01
         )
    
-with st.sidebar.expander("Wet Pack (Costo Adicional)",  expanded=False):
-    wetPackButton = st.checkbox(label='Añadir Wet Pack (MUST PRESS)')
+with st.sidebar.expander("Wet Pack (Additional Cost)",  expanded=False):
+    wetPackButton = st.checkbox(label='Add Wet Pack (MUST PRESS)')
     wetPackPriceInp = st.number_input("Wet Pack Price", min_value=0.00, value=0.00, step=1.00)
     wetPackTransPalInp = st.number_input("Transportation Palette", min_value=0.00, value=0.00, step=1.00)
     
@@ -94,8 +94,8 @@ with st.sidebar:
     # Convert margin (profit as % of price) -> markup (increase over cost)
     markup = (margin / (1 - margin)) if margin < 1 else 0.0
     st.caption(
-        f"Equivalente a aumento sobre costo (markup): **{markup*100:.2f}%** · "
-        f"Razón costo/precio (cost/price): **{1 - margin:.4f}**"
+        f"Markup: percent Increase in Cost: **{markup*100:.2f}%** - "
+        f"Cost/Price: **{1 - margin:.4f}**"
     )
 
 
@@ -111,7 +111,7 @@ event = st.dataframe(
 
 # Final Sidebar View
 with st.sidebar:
-    st.header("Productos seleccionados/Selected Products")
+    st.header("Selected Products")
     products = event.selection.rows
     newDF = df.iloc[products].copy() if products else pd.DataFrame()
 
@@ -164,6 +164,9 @@ with st.sidebar:
                        
             # effective cost used only for the calculation; we don't show it
             effective_cost = newDF["TOTAL_COST"]
+            
+            if wetPackButton:
+                st.warning('Notice: Wet Pack option turned on')
 
             # price = (effective cost) * (1 + markup)
             newDF["CLIENT_PRICE"] = (effective_cost * (1 + markup)).round(2)
@@ -176,10 +179,10 @@ with st.sidebar:
             download_cols = [c for c in display_cols if c != "TOTAL_COST"]
             csv_bytes = newDF[download_cols].to_csv(index=False).encode("utf-8")
             st.download_button(
-                label="⬇️ Descargar CSV / Download CSV (sin Costo Total)",
+                label="⬇️ Download CSV (without Total Cost column included)",
                 data=csv_bytes,
-                file_name="productos_seleccionados.csv",
+                file_name="selected_products.csv",
                 mime="text/csv",
             )
     else:
-        st.info("Selecciona productos para ver y descargar. / Select products to view and download.")
+        st.info("Select products to view and download.")
