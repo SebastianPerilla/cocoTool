@@ -123,7 +123,7 @@ with st.sidebar:
             freightColumnsDropped = ['BQT_PRICE','FLETE_MIAMI', 'WET_PACK', 'FREIGHT' ,'TOTAL_COST','BOX_TOTAL','BOX_PRICE','TARIFF_DUTY','BQT_FREIGHT_PRICE','PACK','VOLUME','ROUNDED_VOLUME','BQT_FREIGHT_PRICE','TARIFF_DUTY', 'WP_HEIGHT', 'WP_WIDTH', 'WP_DEPTH', 'CUBE', 'PRICE_PER_BUNCH', 'WET_PACK_BQT_PRICE', 'CUBE_WET_PACK', 'FUEL_PRICE', 'PRICE_PER_BOX', 'FREIGHT_PRICE_PER_BQT_USA']
             df = df.drop(columns=freightColumnsDropped)
 
-            df['BQT_PRICE'] = df['FARM_PRICE'] * df['STEM_BUNCH']
+            df['BQT_PRICE'] = (df['FARM_PRICE'] + df['CAP']) * df['STEM_BUNCH']
 
             freightSize = FreightSize(dataframe=df,
                             lengthCol='LENGTH',
